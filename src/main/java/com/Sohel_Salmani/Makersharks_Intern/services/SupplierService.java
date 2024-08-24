@@ -7,6 +7,9 @@ import com.Sohel_Salmani.Makersharks_Intern.entities.enums.NatureOfBusiness;
 import com.Sohel_Salmani.Makersharks_Intern.repositories.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,20 +23,20 @@ public class SupplierService {
     private final ModelMapper modelMapper;
 
     public SupplierDto createSupplier(SupplierDto supplierDto) {
+        if (supplierRepository.existsByCompanyName(supplierDto.getCompanyName())) {
+            throw new IllegalArgumentException("Company name must be unique.");
+        }
         SupplierEntity supplier= modelMapper.map(supplierDto,SupplierEntity.class);
 
         return modelMapper.map(supplierRepository.save(supplier), SupplierDto.class);
     }
 
-    public List<SupplierDto> findSuppliers(String location, NatureOfBusiness natureOfBusiness, Set<ManufacturingProcess> manufacturingProcesses, int limit) {
+    public Page<SupplierDto> findSuppliers(String location, NatureOfBusiness natureOfBusiness, Set<ManufacturingProcess> manufacturingProcesses, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SupplierEntity> supplierEntity =  supplierRepository.findByLocationAndNatureOfBusinessAndManufacturingProcessesIn(
+                location, natureOfBusiness, manufacturingProcesses, pageable);
 
-        List<SupplierEntity> supplierEntities = supplierRepository.findByLocationAndNatureOfBusinessAndManufacturingProcessesIn(
-                location, natureOfBusiness, manufacturingProcesses);
-
-        List<SupplierDto>suppliers = supplierEntities
-                .stream()
-                .map((supplierEntity)->modelMapper.map(supplierEntity,SupplierDto.class))
-                .collect(Collectors.toList());
-        return suppliers.size() > limit ? suppliers.subList(0, limit) : suppliers;
+        return supplierEntity
+                .map((supplier)->modelMapper.map(supplier, SupplierDto.class));
     }
 }

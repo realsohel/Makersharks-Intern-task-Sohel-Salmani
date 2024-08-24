@@ -18,10 +18,14 @@ public class SupplierEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "company_name", unique = true, nullable = false)
     private String companyName;
+
     private String website;
+    @Column(name = "location", nullable = false)
     private String location;
     @Enumerated(EnumType.STRING)
+    @Column(name = "nature_of_business", nullable = false)
     private NatureOfBusiness natureOfBusiness;
 
     @ElementCollection(targetClass = ManufacturingProcess.class)
